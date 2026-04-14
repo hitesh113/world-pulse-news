@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      articles: {
+        Row: {
+          author: string | null
+          body: string | null
+          category: string | null
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          published_at: string | null
+          slug: string
+          source: string | null
+          status: string | null
+          title: string
+        }
+        Insert: {
+          author?: string | null
+          body?: string | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug: string
+          source?: string | null
+          status?: string | null
+          title: string
+        }
+        Update: {
+          author?: string | null
+          body?: string | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug?: string
+          source?: string | null
+          status?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          email: string
+          id: string
+          onesignal_player_id: string | null
+          subscribed_at: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          onesignal_player_id?: string | null
+          subscribed_at?: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          onesignal_player_id?: string | null
+          subscribed_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
