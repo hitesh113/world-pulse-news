@@ -1,14 +1,15 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useArticleBySlug, useArticles } from "@/hooks/useArticles";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CategoryBadge from "@/components/CategoryBadge";
 import ArticleGrid from "@/components/ArticleGrid";
-import { Twitter, Facebook, LinkIcon } from "lucide-react";
+import { Twitter, Facebook, LinkIcon, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ArticleDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { data: article, isLoading } = useArticleBySlug(slug || "");
   const { data: related } = useArticles(article?.category || undefined);
 
@@ -55,6 +56,13 @@ export default function ArticleDetail() {
       <Navbar />
       <main className="flex-1">
         <article className="container max-w-3xl py-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
           {article.category && <CategoryBadge category={article.category} />}
           <h1 className="text-3xl md:text-4xl font-bold mt-3 leading-tight">{article.title}</h1>
           <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
