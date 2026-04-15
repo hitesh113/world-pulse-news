@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, Bell } from "lucide-react";
 import { useState } from "react";
 
 const categories = [
@@ -38,13 +38,20 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Link
             to="/search"
             className="p-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Search className="h-5 w-5" />
           </Link>
+          <a
+            href="#subscribe"
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            title="Notify Me"
+          >
+            <Bell className="h-5 w-5" />
+          </a>
           <button
             className="p-2 md:hidden text-muted-foreground hover:text-foreground"
             onClick={() => setMobileOpen(!mobileOpen)}
