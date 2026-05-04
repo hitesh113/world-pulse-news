@@ -1,6 +1,6 @@
 import { useArticles } from "@/hooks/useArticles";
 import Navbar from "@/components/Navbar";
-import HeroCard from "@/components/HeroCard";
+import ScrollMorphHero from "@/components/ui/scroll-morph-hero";
 import ArticleGrid from "@/components/ArticleGrid";
 import SubscribeBanner from "@/components/SubscribeBanner";
 import Footer from "@/components/Footer";
@@ -8,8 +8,7 @@ import Footer from "@/components/Footer";
 export default function Index() {
   const { data: articles, isLoading } = useArticles();
 
-  const hero = articles?.[0];
-  const grid = articles?.slice(1, 10) ?? [];
+  const grid = articles?.slice(0, 20) ?? [];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -18,9 +17,11 @@ export default function Index() {
         <div className="container py-6">
           {isLoading ? (
             <div className="text-center py-20 text-muted-foreground">Loading...</div>
-          ) : hero ? (
+          ) : articles && articles.length > 0 ? (
             <>
-              <HeroCard article={hero} />
+              <div className="mb-12 md:mb-20">
+                <ScrollMorphHero articles={articles} />
+              </div>
               <div className="mt-10">
                 <ArticleGrid articles={grid} />
               </div>
@@ -37,3 +38,4 @@ export default function Index() {
     </div>
   );
 }
+

@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @layer base {
   :root {
@@ -49,6 +49,14 @@
     --news-badge-foreground: 0 0% 100%;
     --news-surface: 0 0% 98%;
     --news-divider: 0 0% 92%;
+
+    /* ScrollMorphHero additions */
+    --hero-bg: 0 0% 98%;
+  }
+
+  /* Smooth animations for hero */
+  .perspective-1000 {
+    perspective: 1000px;
   }
 }
 
