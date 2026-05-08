@@ -6,9 +6,7 @@ export function useSubscribe() {
     mutationFn: async (email: string) => {
       const { data, error } = await supabase
         .from("subscribers")
-        .insert({ email })
-        .select()
-        .single();
+        .insert({ email });
       if (error) {
         if (error.code === "23505") {
           throw new Error("You're already subscribed!");

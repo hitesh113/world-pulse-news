@@ -58,6 +58,7 @@ ALTER TABLE public.subscribers ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can subscribe"
 ON public.subscribers
 FOR INSERT
+TO anon
 WITH CHECK (true);
 
 -- Authenticated users can read subscribers
