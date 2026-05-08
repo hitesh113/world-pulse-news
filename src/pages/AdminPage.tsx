@@ -1,15 +1,32 @@
 import { useState } from "react";
 import { useAllArticlesAdmin, useDeleteArticle } from "@/hooks/useArticles";
 import AdminForm from "@/components/AdminForm";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, RefreshCw } from "lucide-react";
 import type { Article } from "@/hooks/useArticles";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminPage() {
-  const { data: articles, isLoading } = useAllArticlesAdmin();
+  const { data: articles, isLoading, refetch } = useAllArticlesAdmin();
   const deleteArticle = useDeleteArticle();
   const [editing, setEditing] = useState<Article | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+
+  const handleFetchNews = async () => {
+    setIsFetching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-news");
+      if (error) throw error;
+      toast.success(`Fetched ${data.inserted} new articles from GNews API!`);
+      refetch();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to fetch news";
+      toast.error(message);
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const handleDelete = (id: string) => {
     if (!confirm("Delete this article?")) return;
@@ -23,12 +40,22 @@ export default function AdminPage() {
       <div className="container py-8 max-w-5xl">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <button
-            onClick={() => { setEditing(null); setShowForm(true); }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity"
-          >
-            <Plus className="h-4 w-4" /> Add Article
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleFetchNews}
+              disabled={isFetching}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+              {isFetching ? "Fetching..." : "Fetch News"}
+            </button>
+            <button
+              onClick={() => { setEditing(null); setShowForm(true); }}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity"
+            >
+              <Plus className="h-4 w-4" /> Add Article
+            </button>
+          </div>
         </div>
 
         {showForm && (

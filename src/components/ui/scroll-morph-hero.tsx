@@ -119,7 +119,11 @@ export default function ScrollMorphHero({ articles }: ScrollMorphHeroProps) {
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
+      // Only prevent default if we're still animating or haven't reached max scroll
+      const isAnimating = scrollRef.current < MAX_SCROLL;
+      if (isAnimating) {
+        e.preventDefault();
+      }
       const newScroll = Math.min(Math.max(scrollRef.current + e.deltaY, 0), MAX_SCROLL);
       scrollRef.current = newScroll;
       virtualScroll.set(newScroll);
@@ -133,6 +137,10 @@ export default function ScrollMorphHero({ articles }: ScrollMorphHeroProps) {
       const touchY = e.touches[0].clientY;
       const deltaY = touchStartY - touchY;
       touchStartY = touchY;
+      const isAnimating = scrollRef.current < MAX_SCROLL;
+      if (isAnimating) {
+        e.preventDefault();
+      }
       const newScroll = Math.min(Math.max(scrollRef.current + deltaY, 0), MAX_SCROLL);
       scrollRef.current = newScroll;
       virtualScroll.set(newScroll);

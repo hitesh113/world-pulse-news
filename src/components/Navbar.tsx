@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Search, Menu, X, Bell } from "lucide-react";
+import { Search, Menu, X, Bell, SettingsIcon } from "lucide-react";
 import { useState } from "react";
 
 const categories = [
@@ -52,6 +52,13 @@ export default function Navbar() {
           >
             <Bell className="h-5 w-5" />
           </a>
+          <Link
+            to="/admin"
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            title="Admin Panel"
+          >
+            <SettingsIcon className="h-5 w-5" />
+          </Link>
           <button
             className="p-2 md:hidden text-muted-foreground hover:text-foreground"
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -78,6 +85,13 @@ export default function Navbar() {
                 {cat.name}
               </Link>
             ))}
+            <Link
+              to="/admin"
+              onClick={() => setMobileOpen(false)}
+              className="text-sm font-medium py-1.5 text-muted-foreground hover:text-foreground"
+            >
+              Admin
+            </Link>
           </div>
         </div>
       )}
