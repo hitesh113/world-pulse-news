@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ArticleGrid from "@/components/ArticleGrid";
+import BackButton from "@/components/BackButton";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -13,6 +14,7 @@ export default function SearchPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 container py-8">
+        <BackButton />
         <div className="max-w-xl mx-auto mb-10">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />

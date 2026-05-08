@@ -5,6 +5,7 @@ import { Pencil, Trash2, Plus, RefreshCw } from "lucide-react";
 import type { Article } from "@/hooks/useArticles";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BackButton from "@/components/BackButton";
 
 export default function AdminPage() {
   const { data: articles, isLoading, refetch } = useAllArticlesAdmin();
@@ -38,6 +39,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-8 max-w-5xl">
+        <BackButton />
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Admin Panel</h1>
           <div className="flex items-center gap-2">
