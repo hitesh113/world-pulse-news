@@ -67,10 +67,20 @@ export function useSearchArticles(query: string) {
   });
 }
 
+// Admin-only functions with authorization checks
 export function useAllArticlesAdmin() {
   return useQuery({
     queryKey: ["admin-articles"],
     queryFn: async () => {
+      // Check authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Authentication required");
+
+      // Check admin authorization
+      const isAdmin = session.user.user_metadata?.role === 'admin' ||
+                     session.user.email === 'admin@worldpulse.app';
+      if (!isAdmin) throw new Error("Admin access required");
+
       const { data, error } = await supabase
         .from("articles")
         .select("*")
@@ -100,6 +110,20 @@ export function useCreateArticle() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (article: Omit<Article, "id" | "created_at">) => {
+      // Check authentication and authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Authentication required");
+
+      const isAdmin = session.user.user_metadata?.role === 'admin' ||
+                     session.user.email === 'admin@worldpulse.app';
+      if (!isAdmin) throw new Error("Admin access required");
+
+      // Validate input
+      if (!article.title?.trim()) throw new Error("Title is required");
+      if (!article.slug?.trim()) throw new Error("Slug is required");
+      if (article.title.length > 200) throw new Error("Title too long");
+      if (article.excerpt && article.excerpt.length > 500) throw new Error("Excerpt too long");
+
       const { data, error } = await supabase.from("articles").insert(article).select().single();
       if (error) throw error;
       await notifyIfPublished(data as Article);
@@ -116,6 +140,18 @@ export function useUpdateArticle() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Article> & { id: string }) => {
+      // Check authentication and authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Authentication required");
+
+      const isAdmin = session.user.user_metadata?.role === 'admin' ||
+                     session.user.email === 'admin@worldpulse.app';
+      if (!isAdmin) throw new Error("Admin access required");
+
+      // Validate input
+      if (updates.title && updates.title.length > 200) throw new Error("Title too long");
+      if (updates.excerpt && updates.excerpt.length > 500) throw new Error("Excerpt too long");
+
       const { data: prev } = await supabase.from("articles").select("status").eq("id", id).maybeSingle();
       const { data, error } = await supabase.from("articles").update(updates).eq("id", id).select().single();
       if (error) throw error;
@@ -136,6 +172,14 @@ export function useDeleteArticle() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // Check authentication and authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Authentication required");
+
+      const isAdmin = session.user.user_metadata?.role === 'admin' ||
+                     session.user.email === 'admin@worldpulse.app';
+      if (!isAdmin) throw new Error("Admin access required");
+
       const { error } = await supabase.from("articles").delete().eq("id", id);
       if (error) throw error;
     },

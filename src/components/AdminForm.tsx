@@ -34,6 +34,8 @@ export default function AdminForm({ article, onClose }: AdminFormProps) {
     status: "draft",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (article) {
       setForm({
@@ -49,105 +51,192 @@ export default function AdminForm({ article, onClose }: AdminFormProps) {
     }
   }, [article]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-      ...(name === "title" && !isEdit ? { slug: slugify(value) } : {}),
-    }));
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!form.title.trim()) {
+      newErrors.title = "Title is required";
+    } else if (form.title.length > 200) {
+      newErrors.title = "Title must be less than 200 characters";
+    }
+
+    if (!form.slug.trim()) {
+      newErrors.slug = "Slug is required";
+    } else if (!/^[a-z0-9-]+$/.test(form.slug)) {
+      newErrors.slug = "Slug can only contain lowercase letters, numbers, and hyphens";
+    }
+
+    if (form.author && form.author.length > 100) {
+      newErrors.author = "Author name must be less than 100 characters";
+    }
+
+    if (form.excerpt && form.excerpt.length > 500) {
+      newErrors.excerpt = "Excerpt must be less than 500 characters";
+    }
+
+    if (form.cover_image_url && !/^https?:\/\/.+/.test(form.cover_image_url)) {
+      newErrors.cover_image_url = "Cover image URL must be a valid HTTP/HTTPS URL";
+    }
+
+    if (!categories.includes(form.category)) {
+      newErrors.category = "Invalid category selected";
+    }
+
+    if (!["draft", "published"].includes(form.status)) {
+      newErrors.status = "Invalid status selected";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload = {
-      ...form,
-      published_at: form.status === "published" ? new Date().toISOString() : null,
-      source: "manual" as string,
-    };
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors");
+      return;
+    }
 
-    if (isEdit) {
-      updateArticle.mutate(
-        { id: article.id, ...payload },
-        {
-          onSuccess: () => {
-            toast.success("Article updated.");
-            onClose();
-          },
-          onError: (err) => toast.error(err.message),
-        }
-      );
-    } else {
-      createArticle.mutate(payload, {
-        onSuccess: () => {
-          toast.success("Article created.");
-          onClose();
-        },
-        onError: (err) => toast.error(err.message),
-      });
+    try {
+      if (isEdit) {
+        await updateArticle.mutateAsync({ id: article.id, ...form });
+        toast.success("Article updated successfully");
+      } else {
+        await createArticle.mutateAsync(form);
+        toast.success("Article created successfully");
+      }
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save article");
     }
   };
 
-  const inputClass = "w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring";
+  const handleTitleChange = (title: string) => {
+    setForm(prev => ({
+      ...prev,
+      title,
+      slug: isEdit ? prev.slug : slugify(title)
+    }));
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-lg font-semibold">{isEdit ? "Edit Article" : "New Article"}</h2>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Title</label>
-          <input name="title" value={form.title} onChange={handleChange} required className={inputClass} />
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Title *</label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+            maxLength={200}
+          />
+          {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title}</p>}
         </div>
+
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Slug</label>
-          <input name="slug" value={form.slug} onChange={handleChange} required className={inputClass} />
+          <label className="block text-sm font-medium mb-1">Slug *</label>
+          <input
+            type="text"
+            value={form.slug}
+            onChange={(e) => setForm(prev => ({ ...prev, slug: e.target.value }))}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+            pattern="[a-z0-9-]+"
+          />
+          {errors.slug && <p className="text-sm text-red-500 mt-1">{errors.slug}</p>}
         </div>
+
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Category</label>
-          <select name="category" value={form.category} onChange={handleChange} className={inputClass}>
-            {categories.map((c) => (
-              <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+          <label className="block text-sm font-medium mb-1">Category *</label>
+          <select
+            value={form.category}
+            onChange={(e) => setForm(prev => ({ ...prev, category: e.target.value }))}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
             ))}
           </select>
+          {errors.category && <p className="text-sm text-red-500 mt-1">{errors.category}</p>}
         </div>
+
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Author</label>
-          <input name="author" value={form.author} onChange={handleChange} className={inputClass} />
+          <label className="block text-sm font-medium mb-1">Author</label>
+          <input
+            type="text"
+            value={form.author}
+            onChange={(e) => setForm(prev => ({ ...prev, author: e.target.value }))}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+            maxLength={100}
+          />
+          {errors.author && <p className="text-sm text-red-500 mt-1">{errors.author}</p>}
         </div>
+
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Status</label>
-          <select name="status" value={form.status} onChange={handleChange} className={inputClass}>
+          <label className="block text-sm font-medium mb-1">Status *</label>
+          <select
+            value={form.status}
+            onChange={(e) => setForm(prev => ({ ...prev, status: e.target.value }))}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+          >
             <option value="draft">Draft</option>
             <option value="published">Published</option>
           </select>
+          {errors.status && <p className="text-sm text-red-500 mt-1">{errors.status}</p>}
         </div>
-        <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Cover Image URL</label>
-          <input name="cover_image_url" value={form.cover_image_url} onChange={handleChange} className={inputClass} />
+
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Cover Image URL</label>
+          <input
+            type="url"
+            value={form.cover_image_url}
+            onChange={(e) => setForm(prev => ({ ...prev, cover_image_url: e.target.value }))}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+            placeholder="https://example.com/image.jpg"
+          />
+          {errors.cover_image_url && <p className="text-sm text-red-500 mt-1">{errors.cover_image_url}</p>}
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Excerpt</label>
+          <textarea
+            value={form.excerpt}
+            onChange={(e) => setForm(prev => ({ ...prev, excerpt: e.target.value }))}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+            rows={3}
+            maxLength={500}
+            placeholder="Brief summary of the article..."
+          />
+          <p className="text-xs text-muted-foreground mt-1">{form.excerpt.length}/500 characters</p>
+          {errors.excerpt && <p className="text-sm text-red-500 mt-1">{errors.excerpt}</p>}
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Body</label>
+          <textarea
+            value={form.body}
+            onChange={(e) => setForm(prev => ({ ...prev, body: e.target.value }))}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+            rows={10}
+            placeholder="Full article content..."
+          />
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs font-medium text-muted-foreground mb-1">Excerpt</label>
-        <textarea name="excerpt" value={form.excerpt} onChange={handleChange} rows={2} className={inputClass} />
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium text-muted-foreground mb-1">Body</label>
-        <textarea name="body" value={form.body} onChange={handleChange} rows={8} className={inputClass} />
-      </div>
-
-      <div className="flex gap-2">
+      <div className="flex gap-2 pt-4">
         <button
           type="submit"
           disabled={createArticle.isPending || updateArticle.isPending}
-          className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-50"
         >
-          {isEdit ? "Update" : "Create"}
+          {createArticle.isPending || updateArticle.isPending ? "Saving..." : (isEdit ? "Update" : "Create")}
         </button>
-        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 border border-input rounded-md hover:bg-muted"
+        >
           Cancel
         </button>
       </div>

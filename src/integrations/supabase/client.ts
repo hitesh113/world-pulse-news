@@ -13,5 +13,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce', // Use PKCE for better security
+    // Session timeout: 7 days (default is 1 hour for refresh)
+    // Users will need to re-authenticate after 7 days of inactivity
   }
 });

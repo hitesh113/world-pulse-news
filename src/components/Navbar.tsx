@@ -1,6 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { Search, Menu, X, Bell, SettingsIcon } from "lucide-react";
+import { Search, Menu, X, Bell, SettingsIcon, LogIn, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const categories = [
   { name: "Home", path: "/" },
@@ -14,6 +16,16 @@ const categories = [
 export default function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, signOut, isAdmin } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+    } catch (error: any) {
+      toast.error("Error signing out");
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background border-b border-border">
@@ -52,13 +64,32 @@ export default function Navbar() {
           >
             <Bell className="h-5 w-5" />
           </a>
-          <Link
-            to="/admin"
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-            title="Admin Panel"
-          >
-            <SettingsIcon className="h-5 w-5" />
-          </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              title="Admin Panel"
+            >
+              <SettingsIcon className="h-5 w-5" />
+            </Link>
+          )}
+          {user ? (
+            <button
+              onClick={handleSignOut}
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              title="Sign In"
+            >
+              <LogIn className="h-5 w-5" />
+            </Link>
+          )}
           <button
             className="p-2 md:hidden text-muted-foreground hover:text-foreground"
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -85,13 +116,34 @@ export default function Navbar() {
                 {cat.name}
               </Link>
             ))}
-            <Link
-              to="/admin"
-              onClick={() => setMobileOpen(false)}
-              className="text-sm font-medium py-1.5 text-muted-foreground hover:text-foreground"
-            >
-              Admin
-            </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setMobileOpen(false)}
+                className="text-sm font-medium py-1.5 text-muted-foreground hover:text-foreground"
+              >
+                Admin
+              </Link>
+            )}
+            {user ? (
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setMobileOpen(false);
+                }}
+                className="text-sm font-medium py-1.5 text-left text-muted-foreground hover:text-foreground"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileOpen(false)}
+                className="text-sm font-medium py-1.5 text-muted-foreground hover:text-foreground"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
       )}
