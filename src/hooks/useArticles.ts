@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getFallbackArticleBySlug, getFallbackArticles } from "@/lib/fallbackArticles";
 
 export type Article = {
   id: string;
@@ -27,8 +28,11 @@ export function useArticles(category?: string) {
         .order("published_at", { ascending: false });
       if (category) q = q.eq("category", category);
       const { data, error } = await q;
-      if (error) throw error;
-      return (data ?? []) as Article[];
+      if (error) {
+        console.warn("Falling back to local articles because Supabase query failed:", error);
+        return getFallbackArticles();
+      }
+      return ((data?.length ? data : getFallbackArticles()) ?? getFallbackArticles()) as Article[];
     },
   });
 }
@@ -42,8 +46,17 @@ export function useArticleBySlug(slug: string) {
         .select("*")
         .eq("slug", slug)
         .maybeSingle();
-      if (error) throw error;
-      if (!data) throw new Error("Article not found");
+      if (error) {
+        console.warn("Falling back to local article because Supabase query failed:", error);
+        const fallback = getFallbackArticleBySlug(slug);
+        if (fallback) return fallback;
+        throw error;
+      }
+      if (!data) {
+        const fallback = getFallbackArticleBySlug(slug);
+        if (fallback) return fallback;
+        throw new Error("Article not found");
+      }
       return data as Article;
     },
     enabled: !!slug,
@@ -60,7 +73,12 @@ export function useSearchArticles(query: string) {
         .eq("status", "published")
         .or(`title.ilike.%${query}%,excerpt.ilike.%${query}%`)
         .order("published_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.warn("Falling back to local search results because Supabase query failed:", error);
+        return getFallbackArticles().filter((article) =>
+          `${article.title} ${article.excerpt ?? ""}`.toLowerCase().includes(query.toLowerCase())
+        );
+      }
       return (data ?? []) as Article[];
     },
     enabled: !!query,

@@ -18,7 +18,8 @@ export default function SubscribeBanner() {
         setEmail("");
       },
       onError: (err) => {
-        toast.error(err.message || "Something went wrong.");
+        const message = err instanceof Error ? err.message : "Something went wrong.";
+        toast.error(message);
       },
     });
   };

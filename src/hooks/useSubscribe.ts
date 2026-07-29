@@ -1,19 +1,29 @@
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { buildSubscribeErrorMessage, isValidEmail, normalizeEmail } from "@/lib/subscription";
 
 export function useSubscribe() {
   return useMutation({
     mutationFn: async (email: string) => {
-      const { data, error } = await supabase.functions.invoke("subscribe", {
-        body: { email },
-      });
-      if (error) {
-        if (error.message?.includes("already subscribed")) {
-          throw new Error("You're already subscribed!");
-        }
-        throw error;
+      const normalizedEmail = normalizeEmail(email);
+
+      if (!isValidEmail(normalizedEmail)) {
+        throw new Error("Please enter a valid email address.");
       }
-      return data;
+
+      try {
+        const { data, error } = await supabase.functions.invoke("subscribe", {
+          body: { email: normalizedEmail },
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        return data;
+      } catch (error) {
+        throw new Error(buildSubscribeErrorMessage(error));
+      }
     },
   });
 }
