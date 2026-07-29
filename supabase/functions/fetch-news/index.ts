@@ -22,6 +22,13 @@ function slugify(text: string): string {
     .substring(0, 80);
 }
 
+function normalizeImageUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -73,7 +80,7 @@ Deno.serve(async (req) => {
           slug,
           category: localCategory,
           author: article.source?.name || "GNews",
-          cover_image_url: article.image || null,
+          cover_image_url: normalizeImageUrl(article.image) ?? normalizeImageUrl(article?.image) ?? null,
           excerpt: article.description || "",
           body: article.content || article.description || "",
           status: "published",
