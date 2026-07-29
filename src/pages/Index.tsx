@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { buildEdgeFunctionErrorMessage } from "@/lib/edgeFunctions";
 
 export default function Index() {
   const { data: articles, isLoading, refetch } = useArticles();
@@ -20,12 +21,13 @@ export default function Index() {
     try {
       const { data, error } = await supabase.functions.invoke("fetch-news");
       if (error) throw error;
-      toast.success(`Fetched ${data.inserted} new articles from GNews API!`);
+      const insertedCount = typeof data?.inserted === "number" ? data.inserted : 0;
+      toast.success(`Fetched ${insertedCount} new articles from GNews API!`);
       refetch();
       setLastUpdate(new Date());
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch news";
-      toast.error(message);
+      toast.error(buildEdgeFunctionErrorMessage("fetch-news", message));
     } finally {
       setIsFetching(false);
     }

@@ -6,6 +6,7 @@ import type { Article } from "@/hooks/useArticles";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BackButton from "@/components/BackButton";
+import { buildEdgeFunctionErrorMessage } from "@/lib/edgeFunctions";
 
 export default function AdminPage() {
   const { data: articles, isLoading, refetch } = useAllArticlesAdmin();
@@ -19,11 +20,12 @@ export default function AdminPage() {
     try {
       const { data, error } = await supabase.functions.invoke("fetch-news");
       if (error) throw error;
-      toast.success(`Fetched ${data.inserted} new articles from GNews API!`);
+      const insertedCount = typeof data?.inserted === "number" ? data.inserted : 0;
+      toast.success(`Fetched ${insertedCount} new articles from GNews API!`);
       refetch();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch news";
-      toast.error(message);
+      toast.error(buildEdgeFunctionErrorMessage("fetch-news", message));
     } finally {
       setIsFetching(false);
     }

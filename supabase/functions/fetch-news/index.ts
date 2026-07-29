@@ -33,8 +33,13 @@ Deno.serve(async (req) => {
       throw new Error("GNEWS_API_KEY is not configured");
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not configured");
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     let totalInserted = 0;
@@ -92,7 +97,7 @@ Deno.serve(async (req) => {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("fetch-news error:", msg);
     return new Response(
-      JSON.stringify({ success: false, error: msg }),
+      JSON.stringify({ success: false, error: msg, hint: "Check that the function is deployed and that GNEWS_API_KEY and SUPABASE_SERVICE_ROLE_KEY are configured in Supabase secrets." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
